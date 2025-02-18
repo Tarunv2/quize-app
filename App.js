@@ -60,25 +60,46 @@ export default function QuizApp() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const [timer, setTimer] = useState(10); // Set initial timer to 10 seconds
 
   useEffect(() => {
     const shuffled = [...quizData].sort(() => Math.random() - 0.5);
     setShuffledQuestions(shuffled);
   }, []);
 
-  const handleAnswer = (option) => {
-    setSelectedOption(option);
-    setTimeout(() => {
-      if (option === shuffledQuestions[currentQuestionIndex].answer) {
-        setScore(score + 1);
-      }
+  useEffect(() => {
+    if (timer === 0) {
+      // If time runs out, mark the current question as incorrect and move to the next question
       if (currentQuestionIndex + 1 < shuffledQuestions.length) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
         setSelectedOption(null);
+        setTimer(10); // Reset timer for the next question
       } else {
         setShowResult(true);
       }
-    }, 1000);
+    } else if (timer > 0 && selectedOption === null) {
+      const countdown = setInterval(() => {
+        setTimer((prevTimer) => prevTimer - 1);
+      }, 1000);
+
+      return () => clearInterval(countdown);
+    }
+  }, [timer, selectedOption, currentQuestionIndex, shuffledQuestions]);
+
+  const handleAnswer = (option) => {
+    setSelectedOption(option);
+    setTimer(10); // Reset timer when an answer is selected
+    if (option === shuffledQuestions[currentQuestionIndex].answer) {
+      setScore(score + 1);
+    }
+    if (currentQuestionIndex + 1 < shuffledQuestions.length) {
+      setTimeout(() => {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+        setSelectedOption(null);
+      }, 1000);
+    } else {
+      setShowResult(true);
+    }
   };
 
   return (
@@ -91,6 +112,7 @@ export default function QuizApp() {
             <h2 className="question-text">
               {shuffledQuestions[currentQuestionIndex].question}
             </h2>
+            <h3>Time left: {timer}s</h3>
             <div className="options-container">
               {shuffledQuestions[currentQuestionIndex].options.map((option, index) => (
                 <button
