@@ -60,7 +60,7 @@ export default function QuizApp() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
-  const [timer, setTimer] = useState(10); // Set initial timer to 10 seconds
+  const [timer, setTimer] = useState(10);
 
   useEffect(() => {
     const shuffled = [...quizData].sort(() => Math.random() - 0.5);
@@ -69,36 +69,40 @@ export default function QuizApp() {
 
   useEffect(() => {
     if (timer === 0) {
-      // If time runs out, mark the current question as incorrect and move to the next question
-      if (currentQuestionIndex + 1 < shuffledQuestions.length) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setSelectedOption(null);
-        setTimer(10); // Reset timer for the next question
-      } else {
-        setShowResult(true);
-      }
+      nextQuestion();
     } else if (timer > 0 && selectedOption === null) {
       const countdown = setInterval(() => {
         setTimer((prevTimer) => prevTimer - 1);
       }, 1000);
-
       return () => clearInterval(countdown);
     }
-  }, [timer, selectedOption, currentQuestionIndex, shuffledQuestions]);
+  }, [timer, selectedOption]);
 
   const handleAnswer = (option) => {
     setSelectedOption(option);
-    setTimer(10); // Reset timer when an answer is selected
     if (option === shuffledQuestions[currentQuestionIndex].answer) {
       setScore(score + 1);
     }
+    setTimeout(() => {
+      nextQuestion();
+    }, 1000);
+  };
+
+  const nextQuestion = () => {
     if (currentQuestionIndex + 1 < shuffledQuestions.length) {
-      setTimeout(() => {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setSelectedOption(null);
-      }, 1000);
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setSelectedOption(null);
+      setTimer(10);
     } else {
       setShowResult(true);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      setSelectedOption(null);
+      setTimer(10);
     }
   };
 
@@ -124,6 +128,10 @@ export default function QuizApp() {
                   {option}
                 </button>
               ))}
+            </div>
+            <div className="navigation-buttons">
+              <button onClick={prevQuestion} disabled={currentQuestionIndex === 0}>Previous</button>
+              <button onClick={nextQuestion} disabled={currentQuestionIndex === shuffledQuestions.length - 1}>Next</button>
             </div>
           </>
         ) : (
